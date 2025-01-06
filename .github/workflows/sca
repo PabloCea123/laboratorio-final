@@ -1,0 +1,39 @@
+name: CI Pipeline with SCA (npm audit)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Checkout del código
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Paso 2: Configurar Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'  # Ajusta según la versión de Node.js que uses
+
+      # Paso 3: Instalar dependencias
+      - name: Install dependencies
+        run: npm install
+
+      # Paso 4: Ejecutar el análisis de dependencias con npm audit
+      - name: Run npm audit
+        run: npm audit --json > audit-report.json
+
+      # Paso 5: Revisión del reporte y fallo si hay vulnerabilidades de riesgo alto o medio
+      - name: Check npm audit vulnerabilities
+        run: |
+          critical_vulnerabilities=$(jq '.advisories | to_entries | map(select(.value.severity == "critical" or .value.severity == "high" or .value.severity == "moderate")) | length' audit-report.json)
+          if [ "$critical_vulnerabilities" -gt 0 ]; then
+            echo "Found critical/high/medium vulnerabilities. Failing the build."
+            exit 1
+          else
+            echo "No critical/high/medium vulnerabilities found."
+          fi
