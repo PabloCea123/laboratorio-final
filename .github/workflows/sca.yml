@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' 
+          node-version: '16'
 
       - name: Install dependencies
         run: npm install
@@ -23,7 +23,11 @@ jobs:
       - name: Install Dependency-Check
         run: |
           curl -Lo dependency-check-cli.zip https://github.com/jeremylong/DependencyCheck/releases/download/v6.0.4/dependency-check-6.0.4-release.zip
-          unzip dependency-check-cli.zip
+          unzip -q dependency-check-cli.zip
+          chmod +x ./dependency-check/bin/dependency-check.sh
+
+      - name: Run Dependency-Check
+        run: |
           ./dependency-check/bin/dependency-check.sh --scan ./ --out dependency-check-report --disableAssemblyAnalyzer
 
       - name: Fail if high, critical or medium vulnerabilities in SCA
