@@ -20,15 +20,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Dependency-Check
-        run: |
-          curl -Lo dependency-check-cli.zip https://github.com/jeremylong/DependencyCheck/releases/download/v6.0.4/dependency-check-6.0.4-release.zip
-          unzip -q dependency-check-cli.zip
-          chmod +x ./dependency-check/bin/dependency-check.sh
-
       - name: Run Dependency-Check
-        run: |
-          ./dependency-check/bin/dependency-check.sh --scan ./ --out dependency-check-report --disableAssemblyAnalyzer
+        uses: jeremylong/DependencyCheck-Github-Action@v1
+        with:
+          project: 'laboratorio-final'
+          format: 'ALL'  # Formatos de reporte (HTML, JSON, XML)
+          out: './dependency-check-report'
 
       - name: Fail if high, critical or medium vulnerabilities in SCA
         run: |
