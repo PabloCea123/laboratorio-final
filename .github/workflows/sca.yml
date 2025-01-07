@@ -1,37 +1,29 @@
-name: CI Pipeline with SCA (npm audit)
+name: SCA Analysis with Dependency-Check
 
 on:
   push:
   workflow_dispatch:
 
 jobs:
-  build:
+  sca:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run npm audit
-        run: npm audit --json > audit-report.json
-        
-      - name: Verify node_modules
-        run: ls node_modules
-
-      - name: Check npm audit vulnerabilities
+      
+      - name: Install Dependency-Check
         run: |
-          critical_vulnerabilities=$(jq '.advisories | to_entries | map(select(.value.severity == "critical" or .value.severity == "high" or .value.severity == "moderate")) | length' audit-report.json)
-          if [ "$critical_vulnerabilities" -gt 0 ]; then
-            echo "Found critical/high/medium vulnerabilities. Failing the build."
+          curl -Lo dependency-check-cli.zip https://github.com/jeremylong/DependencyCheck/releases/download/v6.0.4/dependency-check-6.0.4-release.zip
+          unzip dependency-check-cli.zip
+          ./dependency-check/bin/dependency-check.sh --scan ./ --out dependency-check-report
+
+      - name: Fail if high, critical or medium vulnerabilities in SCA
+        run: |
+          critical_vulns=$(jq '.dependencies | map(select(.vulnerabilities | length > 0))' dependency-check-report/dependency-check-report.json)
+          if [ "$(echo "$critical_vulns" | jq length)" -gt 0 ]; then
+            echo "Found high, critical or medium vulnerabilities in SCA. Failing the build."
             exit 1
           else
-            echo "No critical/high/medium vulnerabilities found."
+            echo "No high/critical/medium vulnerabilities found in SCA."
           fi
