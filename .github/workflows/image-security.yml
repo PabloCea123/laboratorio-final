@@ -1,0 +1,35 @@
+name: Image Security with Trivy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  image_security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker Image
+        run: |
+          docker build -t myapp:latest .
+
+      - name: Run Trivy Scan on Docker Image
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy myapp:latest --severity HIGH,CRITICAL,MEDIUM --format json > trivy-report.json
+
+      - name: Fail if high, critical or medium vulnerabilities in image
+        run: |
+          trivy_vulns=$(jq '[.[] | select(.Severity=="HIGH" or .Severity=="CRITICAL" or .Severity=="MEDIUM")]' trivy-report.json)
+          if [ "$(echo "$trivy_vulns" | jq length)" -gt 0 ]; then
+            echo "Found high/critical/medium vulnerabilities in Docker image. Failing the build."
+            exit 1
+          else
+            echo "No high/critical/medium vulnerabilities found in Docker image."
+          fi
