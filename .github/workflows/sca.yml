@@ -11,12 +11,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' 
+
+      - name: Install dependencies
+        run: npm install
+
       - name: Install Dependency-Check
         run: |
           curl -Lo dependency-check-cli.zip https://github.com/jeremylong/DependencyCheck/releases/download/v6.0.4/dependency-check-6.0.4-release.zip
           unzip dependency-check-cli.zip
-          ./dependency-check/bin/dependency-check.sh --scan ./ --out dependency-check-report
+          ./dependency-check/bin/dependency-check.sh --scan ./ --out dependency-check-report --disableAssemblyAnalyzer
 
       - name: Fail if high, critical or medium vulnerabilities in SCA
         run: |
