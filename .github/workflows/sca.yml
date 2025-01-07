@@ -22,27 +22,20 @@ jobs:
 
       - name: Download and Install Dependency-Check
         run: |
-          echo "Downloading Dependency-Check..."
           curl -Lo dependency-check-cli.zip https://github.com/jeremylong/DependencyCheck/releases/download/v7.0.2/dependency-check-7.0.2-release.zip
-          echo "Unzipping Dependency-Check..."
           unzip -q dependency-check-cli.zip
           chmod +x ./dependency-check/bin/dependency-check.sh
-          echo "Dependency-Check installed successfully."
 
       - name: Run Dependency-Check
         run: |
-          echo "Running Dependency-Check..."
           ./dependency-check/bin/dependency-check.sh --scan ./ --out dependency-check-report --disableAssemblyAnalyzer
-          echo "Dependency-Check execution finished."
 
       - name: Check for vulnerabilities
         run: |
-          echo "Checking for high, critical or medium vulnerabilities..."
           critical_vulns=$(jq '.dependencies | map(select(.vulnerabilities | length > 0))' dependency-check-report/dependency-check-report.json)
-          echo "Vulnerabilities found: $(echo "$critical_vulns" | jq length)"
           if [ "$(echo "$critical_vulns" | jq length)" -gt 0 ]; then
-            echo "Found high, critical or medium vulnerabilities. Failing the build."
+            echo "Found critical/high/medium vulnerabilities in dependencies. Failing the build."
             exit 1
           else
-            echo "No high/critical/medium vulnerabilities found."
+            echo "No critical/high/medium vulnerabilities found in dependencies."
           fi
