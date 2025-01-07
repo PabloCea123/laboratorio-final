@@ -20,6 +20,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Java (needed for Dependency-Check)
+        run: sudo apt-get install openjdk-11-jdk -y
+
       - name: Download and Install Dependency-Check
         run: |
           curl -Lo dependency-check-cli.zip https://github.com/jeremylong/DependencyCheck/releases/download/v7.0.2/dependency-check-7.0.2-release.zip
